@@ -4,7 +4,7 @@
 package pingers
 
 func init() {
-	registerPinger("mysql", newPostgresPinger)
+	registerPinger("mysql", newmysqlPinger)
 }
 
 type mysqlPinger struct {

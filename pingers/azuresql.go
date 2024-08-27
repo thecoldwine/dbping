@@ -4,7 +4,7 @@
 package pingers
 
 func init() {
-	registerPinger("azuresql", newPostgresPinger)
+	registerPinger("azuresql", newAzureSqlPinger)
 }
 
 type azureSqlPinger struct {

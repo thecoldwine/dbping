@@ -1,5 +1,11 @@
 package pingers
 
+import (
+	"log"
+	"math"
+	"time"
+)
+
 // internal type for the pinger
 // normally we just need a connection string and sql statement in _some_ cases
 // if the sql statement is an empty string the default one will be used
@@ -16,9 +22,11 @@ func registerPinger(dbtype string, factory pingerFactory) {
 }
 
 type Results struct {
-	Attempts     int
-	TotalLatency float64
-	Errors       []error
+	Pings  int
+	Avg    time.Duration
+	Min    time.Duration
+	Max    time.Duration
+	Errors []error
 }
 
 type pinger interface {
@@ -37,15 +45,46 @@ func ListPingers() []string {
 	return results
 }
 
-func Test(dbtype, connectionString, sql string) (*Results, error) {
+func Test(dbtype, connectionString, sql string, pings int) (*Results, error) {
 	pinger := pingers[dbtype](connectionString, sql)
+	defer pinger.Close()
 
+	moment := time.Now()
 	err := pinger.Connect()
 	if err != nil {
 		return nil, err
 	}
 
-	defer pinger.Close()
+	log.Println("Connected in", time.Since(moment))
 
-	return nil, nil
+	errs := make([]error, 0)
+
+	min := math.Inf(1)
+	max := math.Inf(-1)
+	sum := 0.0
+	for i := range pings {
+		moment = time.Now()
+
+		err = pinger.Ping()
+		if err != nil {
+			errs = append(errs, err)
+			log.Println("error while ping", i, ":", err)
+		}
+
+		elapsed := time.Since(moment)
+		min = math.Min(min, float64(elapsed))
+		max = math.Max(max, float64(elapsed))
+
+		sum += float64(elapsed)
+	}
+
+	results := &Results{
+		Pings:  pings,
+		Avg:    time.Duration(sum / float64(pings)),
+		Min:    time.Duration(min),
+		Max:    time.Duration(max),
+		Errors: errs,
+	}
+
+	return results, nil
 }

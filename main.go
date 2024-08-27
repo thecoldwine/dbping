@@ -14,6 +14,8 @@ var (
 	flags            *flag.FlagSet
 	connectionString string
 	dbtype           string
+	query            string
+	pings            int
 )
 
 func init() {
@@ -23,23 +25,27 @@ func init() {
 		panic("program had been compiled without any pingers, quit")
 	}
 
-	flags = flag.NewFlagSet("flags", flag.ExitOnError)
-	flags.StringVar(&connectionString, "connection-string", "", "A connection string to the database, refer to the respective drivers")
-	flags.StringVar(&dbtype, "dbtype", p[0], fmt.Sprintf("A database type to ping, supported databases in this build [%s]", strings.Join(p, ",")))
+	flag.StringVar(&connectionString, "connection-string", "", "A connection string to the database, refer to the respective drivers")
+	flag.StringVar(&dbtype, "dbtype", p[0], fmt.Sprintf("A database type to ping, supported databases in this build [%s]", strings.Join(p, ",")))
+	flag.StringVar(&query, "query", "", "A query to execute for latency test. No sanity checks applied.")
+	flag.IntVar(&pings, "pings", 1, "A number of pings to the databases")
 }
 
 func main() {
-	flags.Parse(os.Args)
-
 	if len(os.Args) == 1 {
-		flags.Usage()
+		flag.Usage()
 	}
 
-	_, err := pingers.Test(dbtype, connectionString, "")
+	flag.Parse()
 
+	results, err := pingers.Test(dbtype, connectionString, query, pings)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// print results
+	fmt.Printf("Total pings: %d. Min: %s; Max: %s; Average: %s.\n", results.Pings, results.Min, results.Max, results.Avg)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
