@@ -1,6 +1,7 @@
 package pingers
 
 import (
+	"database/sql"
 	"log"
 	"math"
 	"time"
@@ -9,7 +10,7 @@ import (
 // internal type for the pinger
 // normally we just need a connection string and sql statement in _some_ cases
 // if the sql statement is an empty string the default one will be used
-type pingerFactory func(connStr, sqlStatement string) pinger
+type pingerFactory func(connStr, query string) (*sql.DB, string, error)
 
 var pingers map[string]pingerFactory
 
@@ -46,14 +47,21 @@ func ListPingers() []string {
 }
 
 func Test(dbtype, connectionString, sql string, pings int) (*Results, error) {
-	pinger := pingers[dbtype](connectionString, sql)
-	defer pinger.Close()
-
 	moment := time.Now()
-	err := pinger.Connect()
+
+	db, query, err := pingers[dbtype](connectionString, sql)
 	if err != nil {
 		return nil, err
 	}
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetMaxIdleConns(1)
+	db.SetMaxOpenConns(1)
+
+	defer db.Close()
 
 	log.Println("Connected in", time.Since(moment))
 
@@ -65,7 +73,7 @@ func Test(dbtype, connectionString, sql string, pings int) (*Results, error) {
 	for i := range pings {
 		moment = time.Now()
 
-		err = pinger.Ping()
+		_, err := db.Exec(query)
 		if err != nil {
 			errs = append(errs, err)
 			log.Println("error while ping", i, ":", err)

@@ -4,60 +4,32 @@
 package pingers
 
 import (
-	"context"
-	"log"
+	"database/sql"
 
-	"github.com/jackc/pgx/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func init() {
-	registerPinger("postgres", newPostgresPinger)
+	registerPinger("postgres", newPostgresConfiguration)
 }
 
 const defaultPgSql = "SELECT 1"
 
 type postgresPinger struct {
-	conn    *pgx.Conn
+	conn    *sql.DB
 	connStr string
 	sql     string
 }
 
-func newPostgresPinger(connStr, sql string) pinger {
-	if sql == "" {
-		sql = defaultPgSql
+func newPostgresConfiguration(connStr, query string) (*sql.DB, string, error) {
+	if query == "" {
+		query = defaultPgSql
 	}
 
-	return &postgresPinger{
-		connStr: connStr,
-		sql:     sql,
-	}
-}
-
-func (r *postgresPinger) Connect() error {
-	log.Println("connecting with", r.connStr)
-
-	conn, err := pgx.Connect(context.TODO(), r.connStr)
+	db, err := sql.Open("pgx", connStr)
 	if err != nil {
-		return err
-	}
-	r.conn = conn
-
-	return nil
-}
-
-func (r *postgresPinger) Ping() error {
-	row := r.conn.QueryRow(context.TODO(), r.sql)
-	var discard int
-
-	if err := row.Scan(&discard); err != nil {
-		return err
+		return nil, query, err
 	}
 
-	return nil
-}
-
-func (r *postgresPinger) Close() {
-	if r.conn != nil && !r.conn.IsClosed() {
-		r.conn.Close(context.TODO())
-	}
+	return db, query, nil
 }
