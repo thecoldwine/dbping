@@ -3,25 +3,27 @@
 
 package pingers
 
+import (
+	"database/sql"
+
+	_ "github.com/go-sql-driver/mysql"
+)
+
 func init() {
-	registerPinger("mysql", newmysqlPinger)
+	registerPinger("mysql", newMysqlConfiguration)
 }
 
-type mysqlPinger struct {
-}
+const defaultMysqlQuery = "SELECT 1"
 
-func newmysqlPinger(connStr, sql string) pinger {
-	return &mysqlPinger{}
-}
+func newMysqlConfiguration(connStr, query string) (*sql.DB, string, error) {
+	if query == "" {
+		query = defaultMysqlQuery
+	}
 
-func (r *mysqlPinger) Connect() error {
-	return nil
-}
+	db, err := sql.Open("mysql", connStr)
+	if err != nil {
+		return nil, query, err
+	}
 
-func (r *mysqlPinger) Ping() error {
-	return nil
-}
-
-func (r *mysqlPinger) Close() {
-
+	return db, query, nil
 }

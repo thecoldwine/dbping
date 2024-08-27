@@ -13,17 +13,11 @@ func init() {
 	registerPinger("postgres", newPostgresConfiguration)
 }
 
-const defaultPgSql = "SELECT 1"
-
-type postgresPinger struct {
-	conn    *sql.DB
-	connStr string
-	sql     string
-}
+const defaultPostgresQuery = "SELECT 1"
 
 func newPostgresConfiguration(connStr, query string) (*sql.DB, string, error) {
 	if query == "" {
-		query = defaultPgSql
+		query = defaultPostgresQuery
 	}
 
 	db, err := sql.Open("pgx", connStr)

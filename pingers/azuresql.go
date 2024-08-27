@@ -3,25 +3,27 @@
 
 package pingers
 
+import (
+	"database/sql"
+
+	"github.com/microsoft/go-mssqldb/azuread"
+)
+
 func init() {
-	registerPinger("azuresql", newAzureSqlPinger)
+	registerPinger("azuresql", newAzureSqlConfiguration)
 }
 
-type azureSqlPinger struct {
-}
+const defaultAzureSqlQuery = "SELECT 1"
 
-func newAzureSqlPinger(connStr, sql string) pinger {
-	return &azureSqlPinger{}
-}
+func newAzureSqlConfiguration(connStr, query string) (*sql.DB, string, error) {
+	if query == "" {
+		query = defaultAzureSqlQuery
+	}
 
-func (r *azureSqlPinger) Connect() error {
-	return nil
-}
+	db, err := sql.Open(azuread.DriverName, connStr)
+	if err != nil {
+		return nil, query, err
+	}
 
-func (r *azureSqlPinger) Ping() error {
-	return nil
-}
-
-func (r *azureSqlPinger) Close() {
-
+	return db, query, nil
 }

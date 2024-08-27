@@ -46,7 +46,7 @@ func ListPingers() []string {
 	return results
 }
 
-func Test(dbtype, connectionString, sql string, pings int) (*Results, error) {
+func Test(dbtype, connectionString, sql string, pings int, interval time.Duration) (*Results, error) {
 	moment := time.Now()
 
 	db, query, err := pingers[dbtype](connectionString, sql)
@@ -84,6 +84,11 @@ func Test(dbtype, connectionString, sql string, pings int) (*Results, error) {
 		max = math.Max(max, float64(elapsed))
 
 		sum += float64(elapsed)
+
+		if interval > 0 {
+			log.Printf("Ping %d with interval %s: %s", i+1, interval, elapsed)
+			time.Sleep(interval)
+		}
 	}
 
 	results := &Results{

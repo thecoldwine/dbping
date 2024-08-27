@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/thecoldwine/dbping/pingers"
 )
@@ -15,6 +16,7 @@ var (
 	connectionString string
 	dbtype           string
 	query            string
+	interval         time.Duration
 	pings            int
 )
 
@@ -29,6 +31,7 @@ func init() {
 	flag.StringVar(&dbtype, "dbtype", p[0], fmt.Sprintf("A database type to ping, supported databases in this build [%s]", strings.Join(p, ",")))
 	flag.StringVar(&query, "query", "", "A query to execute for latency test. No sanity checks applied.")
 	flag.IntVar(&pings, "pings", 1, "A number of pings to the databases")
+	flag.DurationVar(&interval, "interval", 0.0, "Interval between pings. Accepts duration format: 1s, 10ms, 1m and so on.")
 }
 
 func main() {
@@ -38,7 +41,8 @@ func main() {
 
 	flag.Parse()
 
-	results, err := pingers.Test(dbtype, connectionString, query, pings)
+	log.Println("Testing a connection with driver:", dbtype)
+	results, err := pingers.Test(dbtype, connectionString, query, pings, interval)
 	if err != nil {
 		log.Fatalln(err)
 	}
