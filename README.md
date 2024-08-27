@@ -8,14 +8,16 @@ database connection.
 
 ```bash
 # Usage of dbping:
-#   -connection-string string
-#         A connection string to the database, refer to the respective drivers
-#   -dbtype string
-#         A database type to ping, supported databases in this build [postgres] (default "postgres")
-#   -pings int
-#         A number of pings to the databases (default 1)
-#   -query string
-#         A query to execute for latency test. No sanity checks applied.
+#  -connection-string string
+#    	A connection string to the database, refer to the respective drivers
+#  -dbtype string
+#    	A database type to ping, supported databases in this build [azuresql] (default "azuresql")
+#  -interval duration
+#    	Interval between pings. Accepts duration format: 1s, 10ms, 1m and so on.
+#  -pings int
+#    	A number of pings to the databases (default 1)
+#  -query string
+#    	A query to execute for latency test. No sanity checks applied.
 
 dbping --connection-string <connection-string> \
          --dbtype <dbtype> \
